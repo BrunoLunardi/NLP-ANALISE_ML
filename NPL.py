@@ -2,7 +2,7 @@
 """
 Created on Fri Feb 26 18:21:50 2021
 
-@author: bruno
+@author: Bruno Guilherme Lunardi
 """
 
 import pandas as pd
@@ -19,7 +19,7 @@ musicas = df.iloc[:, 0].values
 artistas =  df.iloc[:, 1].values
 
 #dividir a base de dados em teste e treinamento
-previsores_treinamento, previsores_teste, classe_treinamento, classe_teste = train_test_split(musicas, artistas, test_size=0.25, random_state=0)
+music_trein, music_teste, art_trein, art_teste = train_test_split(musicas, artistas, test_size=0.75, random_state=0)
 
 #variavel com as stopswords em inglês
 stopwordsnltk = nltk.corpus.stopwords.words('english')
@@ -27,6 +27,7 @@ stopwordsnltk = nltk.corpus.stopwords.words('english')
 ################
 #INÍCIO FUNÇÕES
 ################
+
 ################## tratando as palavras -> stemmer e remove stopwords ##################
 def funcStemmerStopWords(letras_musicas):
     """
@@ -37,12 +38,15 @@ def funcStemmerStopWords(letras_musicas):
     
     #definição do stemmer para deixar radicais das palavras
     stemmer = nltk.PorterStemmer()
+    
     for idx, letras in np.ndenumerate(letras_musicas):
+        
         #split as letras das musicas pelo "caractere espaço"
         #para cada palavra que não está na lista de stopwords, remove o radical deste e adiciona na lista
-        comstemming = [str(stemmer.stem(p)) for p in letras.split() if p not in stopwordsnltk]
+        pStemming = [str(stemmer.stem(p)) for p in letras.split() if p not in stopwordsnltk]
+        
         #coloca a letra da musica (sem stopwords e com stemmer) no array de musicas
-        letras_musicas[idx] = comstemming
+        letras_musicas[idx] = pStemming
         
     return letras_musicas
 
@@ -62,7 +66,6 @@ def funcListaPalavras(letras_musicas):
         for palavra in letras:
             listaPalavras.append(palavra)
     
-
     #retorna uma lista com todas as palavras das letras de música
     return listaPalavras
 
@@ -96,8 +99,6 @@ def funcVerificaPalavras(documento):
         caracteristicas['%s' % palavras] = (palavras in doc)
     return caracteristicas
 
-#chama função para remover stop words e deixar somente radical da palavra
-previsores_treinamento = funcStemmerStopWords(previsores_treinamento)
 ################## fim buscar todas as palavras distintas da base de dados ##################
 
 ################## converter numpy.narray para lista e unir lista de musicas com os artistas ################## 
@@ -111,7 +112,7 @@ def funcArrayParaLista(narrayMusicas, narrayArtistas):
     
     listaMusicas = narrayMusicas.tolist()
     listaArtistas = narrayArtistas.tolist()
-    
+
     for i in range(len(listaMusicas)):
         tuplaAux = (listaMusicas[i], listaArtistas[i])
         listaMusArt.append(tuplaAux)    
@@ -122,22 +123,82 @@ def funcArrayParaLista(narrayMusicas, narrayArtistas):
 #FIM FUNÇÕES
 ################
 
+
+################
+#INÍCIO TRATAMENTO DADOS DE TREINO
+################
+#chama função para remover stop words e deixar somente radical da palavra
+music_trein = funcStemmerStopWords(music_trein)
+
+
 #obtem a lista de todas as palavras do conjunto de dados
-listaTodasPalavrasTreinamento = funcListaPalavras(previsores_treinamento)
+listaTodasPalavrasTreinamento = funcListaPalavras(music_trein)
 #obtém a lista das frequencias das palavras
 freqTreinamento = funcFreqPalavras(listaTodasPalavrasTreinamento)
 #recebe a lista de todas as palavras distintas da base de dados
 palavraUnicaTreinamento = funcListaPalavrasUnicas(freqTreinamento)
 #converte array de musicas e artistas para uma lista, unindo estes dois valores
-listaMusArtTreinamento = funcArrayParaLista(previsores_treinamento, classe_treinamento)
+listaMusArtTreinamento = funcArrayParaLista(music_trein, art_trein)
+
+################
+#FIM TRATAMENTO DADOS DE TREINO
+################
+
+
+################
+#INÍCIO CLASSIFICADOR
+################
 
 #aplica os valores da tabela de Naive Bayes
 dadosTreinamento = nltk.classify.apply_features(funcVerificaPalavras, listaMusArtTreinamento)
 # constroi a tabela de probabilidade
 classificador = nltk.NaiveBayesClassifier.train(dadosTreinamento)
+#exibe as classes da base de dados (artistas)
 #print(classificador.labels())
 
+################
+#FIM CLASSIFICADOR
+################
 
 
+################
+#INÍCIO TESTE CLASSIFICADOR
+################
 
+#chama função para remover stop words e deixar somente radical da palavra
+music_teste = funcStemmerStopWords(music_teste)
+#obtem a lista de todas as palavras do conjunto de dados
+listaTodasPalavrasTeste = funcListaPalavras(music_teste)
+#obtém a lista das frequencias das palavras
+freqTeste = funcFreqPalavras(listaTodasPalavrasTeste)
+#converte array de musicas e artistas para uma lista, unindo estes dois valores
+listaMusArtTeste = funcArrayParaLista(music_teste, art_teste)
+
+#print(type(music_teste[0]))
+
+#coluna
+    #se você setar iTuple para o valor 0 (zero), então será exibido a letra da música
+    #se você setar iTuple para o valor 1 (um), então será exibido a artista
+
+#define a linha da music_teste que será utilizada para ser classificado 
+    #(você pode selecionar qualquer música da base de teste através do índice [linha_classificar])
+linha_classificar = 25
+musicaParaClassificar = listaMusArtTeste[linha_classificar][0]
+#como a base de dados de teste já contém o artista, logo podemos pegar ele como artista esperado que o classificador
+    #deve retornar
+artistaEsperado = listaMusArtTeste[linha_classificar][1]
+#faz a conexão das palavras da letra da música com a lista de palavras únicas da base de dados de treino
+    #esta conexão de palavras, na qual se existir a palavra da letra da música na base de dados o valor será True
+    #é utilizado na tabela de probabilidades do Naive Bayes
+musicaParaClassificar = funcVerificaPalavras(musicaParaClassificar)
+
+#aplica classificador para a letra da música definida selecionada através da linha_classificar
+resultClass = classificador.classify(musicaParaClassificar)
+
+print("Era esperado que o classificador retornasse a artista: ", artistaEsperado)
+print("O classificador retornou o seguinte resultado para a música escolhida: ", resultClass)
+
+################
+#FIM TESTE CLASSIFICADOR
+################
 
