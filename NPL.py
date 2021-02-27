@@ -14,13 +14,9 @@ from sklearn.model_selection import train_test_split
 
 df = pd.read_excel("teste_smarkio_lbs.xls", sheet_name="NLP", header=1)
 
-#print(df.head())
-
 #dividir a base de dados em letras das musicas e o artista a qual as letras pertencem
 musicas = df.iloc[:, 0].values
 artistas =  df.iloc[:, 1].values
-# print(artistas)
-# print(musicas)
 
 #dividir a base de dados em teste e treinamento
 previsores_treinamento, previsores_teste, classe_treinamento, classe_teste = train_test_split(musicas, artistas, test_size=0.25, random_state=0)
@@ -28,11 +24,15 @@ previsores_treinamento, previsores_teste, classe_treinamento, classe_teste = tra
 #variavel com as stopswords em inglês
 stopwordsnltk = nltk.corpus.stopwords.words('english')
 
+################
+#INÍCIO FUNÇÕES
+################
 ################## tratando as palavras -> stemmer e remove stopwords ##################
 def funcStemmerStopWords(letras_musicas):
     """
       Função que deixa somente radicais das palavras (PorterStemmer) e retira stopwords, ou seja, palavras
       que são irrelevantes para o processamento do algortimo
+      return letras_musicas(stemming) -> numpy.narray
     """
     
     #definição do stemmer para deixar radicais das palavras
@@ -52,6 +52,7 @@ def funcStemmerStopWords(letras_musicas):
 def funcListaPalavras(letras_musicas):
     """
       Função que retorna uma lista com todas as palavras contidas nas letras das músicas
+      return listaPalavras(palavras) -> list
     """
     #define a lista que receberá todas as palavras contidas nas letras das músicas
     listaPalavras = []
@@ -60,6 +61,7 @@ def funcListaPalavras(letras_musicas):
         #for para pegar cada palavra contida em cada letra de música
         for palavra in letras:
             listaPalavras.append(palavra)
+    
 
     #retorna uma lista com todas as palavras das letras de música
     return listaPalavras
@@ -67,7 +69,7 @@ def funcListaPalavras(letras_musicas):
 def funcFreqPalavras(palavras):
     """
       Função para retornar uma lista com as palavrsa e quantas vezes elas foram utilizadas
-      return (palavra, frequencia) 
+      return palavras(palavra, frequencia)  -> dict
     """
     palavras = nltk.FreqDist(palavras)
     return palavras
@@ -75,6 +77,7 @@ def funcFreqPalavras(palavras):
 def funcListaPalavrasUnicas(frequencia):
     """
       Função que retorna um dicionário de todas as palavras distintas
+      return freq(keys())  -> dict_keys
     """    
     freq = frequencia.keys()
     return freq
@@ -85,6 +88,7 @@ def funcVerificaPalavras(documento):
       preenche com valores booleano.
           As palavras da base de dados que existerem na frase receberão valores true, o resto será false
           Isto auxilia no processo de geração da tabela de probabilidade Naive Bayes
+      return (caracteristicas)  -> dict_keys
     """       
     doc = set(documento)
     caracteristicas = {}
@@ -94,15 +98,46 @@ def funcVerificaPalavras(documento):
 
 #chama função para remover stop words e deixar somente radical da palavra
 previsores_treinamento = funcStemmerStopWords(previsores_treinamento)
+################## fim buscar todas as palavras distintas da base de dados ##################
+
+################## converter numpy.narray para lista e unir lista de musicas com os artistas ################## 
+def funcArrayParaLista(narrayMusicas, narrayArtistas):
+    """
+        Função que converte numpy.narray das musicas e artistas para uma lista de tuplas com estes dois valores
+        retorno listaMusArt(musicas, artistas) -> dict
+    """    
+    
+    listaMusArt = []
+    
+    listaMusicas = narrayMusicas.tolist()
+    listaArtistas = narrayArtistas.tolist()
+    
+    for i in range(len(listaMusicas)):
+        tuplaAux = (listaMusicas[i], listaArtistas[i])
+        listaMusArt.append(tuplaAux)    
+    
+    return listaMusArt
+
+################
+#FIM FUNÇÕES
+################
 
 #obtem a lista de todas as palavras do conjunto de dados
 listaTodasPalavrasTreinamento = funcListaPalavras(previsores_treinamento)
 #obtém a lista das frequencias das palavras
 freqTreinamento = funcFreqPalavras(listaTodasPalavrasTreinamento)
-
+#recebe a lista de todas as palavras distintas da base de dados
 palavraUnicaTreinamento = funcListaPalavrasUnicas(freqTreinamento)
+#converte array de musicas e artistas para uma lista, unindo estes dois valores
+listaMusArtTreinamento = funcArrayParaLista(previsores_treinamento, classe_treinamento)
+
+#aplica os valores da tabela de Naive Bayes
+dadosTreinamento = nltk.classify.apply_features(funcVerificaPalavras, listaMusArtTreinamento)
+# constroi a tabela de probabilidade
+classificador = nltk.NaiveBayesClassifier.train(dadosTreinamento)
+#print(classificador.labels())
 
 
-#caracteristicasfrase = funcVerificaPalavras(['am', 'nov', 'dia', 'minimum,'])
-#print(caracteristicasfrase)
+
+
 
