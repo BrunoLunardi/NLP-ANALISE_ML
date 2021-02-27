@@ -79,7 +79,18 @@ def funcListaPalavrasUnicas(frequencia):
     freq = frequencia.keys()
     return freq
 
-
+def funcVerificaPalavras(documento):
+    """
+      Função que recebe uma frase e, de acordo com a base de dados de palavras de treinamento, 
+      preenche com valores booleano.
+          As palavras da base de dados que existerem na frase receberão valores true, o resto será false
+          Isto auxilia no processo de geração da tabela de probabilidade Naive Bayes
+    """       
+    doc = set(documento)
+    caracteristicas = {}
+    for palavras in palavraUnicaTreinamento:
+        caracteristicas['%s' % palavras] = (palavras in doc)
+    return caracteristicas
 
 #chama função para remover stop words e deixar somente radical da palavra
 previsores_treinamento = funcStemmerStopWords(previsores_treinamento)
@@ -91,4 +102,7 @@ freqTreinamento = funcFreqPalavras(listaTodasPalavrasTreinamento)
 
 palavraUnicaTreinamento = funcListaPalavrasUnicas(freqTreinamento)
 
+
+#caracteristicasfrase = funcVerificaPalavras(['am', 'nov', 'dia', 'minimum,'])
+#print(caracteristicasfrase)
 
