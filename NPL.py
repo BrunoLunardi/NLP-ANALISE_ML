@@ -8,6 +8,7 @@ Created on Fri Feb 26 18:21:50 2021
 import pandas as pd
 import numpy as np
 import nltk
+from nltk.metrics import ConfusionMatrix
 from sklearn.model_selection import train_test_split
 
 #nltk.download()
@@ -101,7 +102,6 @@ def funcVerificaPalavras(documento):
 
 ################## fim buscar todas as palavras distintas da base de dados ##################
 
-################## converter numpy.narray para lista e unir lista de musicas com os artistas ################## 
 def funcArrayParaLista(narrayMusicas, narrayArtistas):
     """
         Função que converte numpy.narray das musicas e artistas para uma lista de tuplas com estes dois valores
@@ -119,6 +119,17 @@ def funcArrayParaLista(narrayMusicas, narrayArtistas):
     
     return listaMusArt
 
+def funcMatrizConfusao(musicaClass, classificador):
+    esperado = []
+    classificado = []
+    for (letra, artista) in dadosTreinamento:
+        resultado = classificador.classify(letra)
+        classificado.append(resultado)
+        esperado.append(artista)    
+        
+    matriz = ConfusionMatrix(esperado, classificado)
+    print(matriz)
+
 ################
 #FIM FUNÇÕES
 ################
@@ -129,10 +140,9 @@ def funcArrayParaLista(narrayMusicas, narrayArtistas):
 ################
 #chama função para remover stop words e deixar somente radical da palavra
 music_trein = funcStemmerStopWords(music_trein)
-
-
 #obtem a lista de todas as palavras do conjunto de dados
 listaTodasPalavrasTreinamento = funcListaPalavras(music_trein)
+
 #obtém a lista das frequencias das palavras
 freqTreinamento = funcFreqPalavras(listaTodasPalavrasTreinamento)
 #recebe a lista de todas as palavras distintas da base de dados
@@ -143,7 +153,6 @@ listaMusArtTreinamento = funcArrayParaLista(music_trein, art_trein)
 ################
 #FIM TRATAMENTO DADOS DE TREINO
 ################
-
 
 ################
 #INÍCIO CLASSIFICADOR
@@ -164,29 +173,19 @@ classificador = nltk.NaiveBayesClassifier.train(dadosTreinamento)
 ################
 #INÍCIO TESTE CLASSIFICADOR
 ################
-
-#chama função para remover stop words e deixar somente radical da palavra
-music_teste = funcStemmerStopWords(music_teste)
-#obtem a lista de todas as palavras do conjunto de dados
-listaTodasPalavrasTeste = funcListaPalavras(music_teste)
-#obtém a lista das frequencias das palavras
-freqTeste = funcFreqPalavras(listaTodasPalavrasTeste)
-#converte array de musicas e artistas para uma lista, unindo estes dois valores
 listaMusArtTeste = funcArrayParaLista(music_teste, art_teste)
-
-#print(type(music_teste[0]))
-
 #coluna
     #se você setar iTuple para o valor 0 (zero), então será exibido a letra da música
     #se você setar iTuple para o valor 1 (um), então será exibido a artista
 
 #define a linha da music_teste que será utilizada para ser classificado 
     #(você pode selecionar qualquer música da base de teste através do índice [linha_classificar])
-linha_classificar = 25
+linha_classificar = 1
 musicaParaClassificar = listaMusArtTeste[linha_classificar][0]
 #como a base de dados de teste já contém o artista, logo podemos pegar ele como artista esperado que o classificador
     #deve retornar
 artistaEsperado = listaMusArtTeste[linha_classificar][1]
+
 #faz a conexão das palavras da letra da música com a lista de palavras únicas da base de dados de treino
     #esta conexão de palavras, na qual se existir a palavra da letra da música na base de dados o valor será True
     #é utilizado na tabela de probabilidades do Naive Bayes
@@ -198,7 +197,9 @@ resultClass = classificador.classify(musicaParaClassificar)
 print("Era esperado que o classificador retornasse a artista: ", artistaEsperado)
 print("O classificador retornou o seguinte resultado para a música escolhida: ", resultClass)
 
+#matriz de confusão
+funcMatrizConfusao(listaMusArtTeste, classificador)
+
 ################
 #FIM TESTE CLASSIFICADOR
 ################
-
