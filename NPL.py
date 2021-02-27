@@ -20,7 +20,7 @@ musicas = df.iloc[:, 0].values
 artistas =  df.iloc[:, 1].values
 
 #dividir a base de dados em teste e treinamento
-music_trein, music_teste, art_trein, art_teste = train_test_split(musicas, artistas, test_size=0.75, random_state=0)
+music_trein, music_teste, art_trein, art_teste = train_test_split(musicas, artistas, test_size=0.30, random_state=0)
 
 #variavel com as stopswords em inglês
 stopwordsnltk = nltk.corpus.stopwords.words('english')
@@ -180,7 +180,7 @@ listaMusArtTeste = funcArrayParaLista(music_teste, art_teste)
 
 #define a linha da music_teste que será utilizada para ser classificado 
     #(você pode selecionar qualquer música da base de teste através do índice [linha_classificar])
-linha_classificar = 1
+linha_classificar = 0
 musicaParaClassificar = listaMusArtTeste[linha_classificar][0]
 #como a base de dados de teste já contém o artista, logo podemos pegar ele como artista esperado que o classificador
     #deve retornar
@@ -203,3 +203,4 @@ funcMatrizConfusao(listaMusArtTeste, classificador)
 ################
 #FIM TESTE CLASSIFICADOR
 ################
+
