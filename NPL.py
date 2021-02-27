@@ -28,7 +28,7 @@ previsores_treinamento, previsores_teste, classe_treinamento, classe_teste = tra
 #variavel com as stopswords em inglês
 stopwordsnltk = nltk.corpus.stopwords.words('english')
 
-################## início tratando as palavras -> stemming e remove stopwords ##################
+################## tratando as palavras -> stemmer e remove stopwords ##################
 def funcStemmerStopWords(letras_musicas):
     """
       Função que deixa somente radicais das palavras (PorterStemmer) e retira stopwords, ou seja, palavras
@@ -45,8 +45,50 @@ def funcStemmerStopWords(letras_musicas):
         letras_musicas[idx] = comstemming
         
     return letras_musicas
-################## fim tratando as palavras -> stemming ##################
 
 ################## inicio buscar todas as palavras distintas da base de dados ##################
+###### isto serve para montar a tabela de probabilidade do Naive Bayes
 
-################## fim buscar todas as palavras distintas da base de dados ##################
+def funcListaPalavras(letras_musicas):
+    """
+      Função que retorna uma lista com todas as palavras contidas nas letras das músicas
+    """
+    #define a lista que receberá todas as palavras contidas nas letras das músicas
+    listaPalavras = []
+    #for para cada letra de música
+    for idx, letras in np.ndenumerate(letras_musicas):
+        #for para pegar cada palavra contida em cada letra de música
+        for palavra in letras:
+            listaPalavras.append(palavra)
+
+    #retorna uma lista com todas as palavras das letras de música
+    return listaPalavras
+
+def funcFreqPalavras(palavras):
+    """
+      Função para retornar uma lista com as palavrsa e quantas vezes elas foram utilizadas
+      return (palavra, frequencia) 
+    """
+    palavras = nltk.FreqDist(palavras)
+    return palavras
+
+def funcListaPalavrasUnicas(frequencia):
+    """
+      Função que retorna um dicionário de todas as palavras distintas
+    """    
+    freq = frequencia.keys()
+    return freq
+
+
+
+#chama função para remover stop words e deixar somente radical da palavra
+previsores_treinamento = funcStemmerStopWords(previsores_treinamento)
+
+#obtem a lista de todas as palavras do conjunto de dados
+listaTodasPalavrasTreinamento = funcListaPalavras(previsores_treinamento)
+#obtém a lista das frequencias das palavras
+freqTreinamento = funcFreqPalavras(listaTodasPalavrasTreinamento)
+
+palavraUnicaTreinamento = funcListaPalavrasUnicas(freqTreinamento)
+
+
